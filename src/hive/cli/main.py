@@ -154,10 +154,7 @@ def device_scan(
         )
         return
 
-    console.print(
-        f"[green]Scanned[/green] {len(devices)} device(s)"
-        f"{persisted_note}"
-    )
+    console.print(f"[green]Scanned[/green] {len(devices)} device(s){persisted_note}")
 
     if not devices:
         return
@@ -169,9 +166,7 @@ def device_scan(
     table.add_column("port / ssh", style="white")
     table.add_column("fingerprint", style="dim")
     for d in devices:
-        vid_pid = (
-            f"{d.usb_vid}:{d.usb_pid}" if d.usb_vid and d.usb_pid else "—"
-        )
+        vid_pid = f"{d.usb_vid}:{d.usb_pid}" if d.usb_vid and d.usb_pid else "—"
         port_or_ssh = (
             d.serial_port
             or (f"{d.ssh_user}@{d.ssh_host}:{d.ssh_port}" if d.ssh_host else "—")
@@ -352,11 +347,7 @@ def device_db_list(
     table.add_column("fingerprint", style="dim")
     for d in devices:
         vid_pid = f"{d.usb_vid}:{d.usb_pid}" if d.usb_vid and d.usb_pid else "—"
-        port_or_ssh = (
-            d.serial_port
-            or (f"{d.ssh_user}@{d.ssh_host}" if d.ssh_host else "—")
-            or "—"
-        )
+        port_or_ssh = d.serial_port or (f"{d.ssh_user}@{d.ssh_host}" if d.ssh_host else "—") or "—"
         table.add_row(
             d.device_id or "—",
             vid_pid,

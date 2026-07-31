@@ -22,10 +22,10 @@ Usage:
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -56,9 +56,7 @@ class HiveDatabase:
             url,
             future=True,
             # SQLite-specific: enable foreign keys + WAL mode for safety
-            connect_args={"check_same_thread": False}
-            if url.startswith("sqlite")
-            else {},
+            connect_args={"check_same_thread": False} if url.startswith("sqlite") else {},
         )
         path: Path | None = None
         if url.startswith("sqlite:///") and ":memory:" not in url:

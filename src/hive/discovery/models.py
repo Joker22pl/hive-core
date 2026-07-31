@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 # ---------------------------------------------------------------------------
 # VID/PID / serial validation patterns (mirrored from DeviceManifest)
 # ---------------------------------------------------------------------------
-
 import re as _re
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 _VID_PID_RE = _re.compile(r"^[0-9A-Fa-f]{4}$")
 

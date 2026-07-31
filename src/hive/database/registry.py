@@ -94,9 +94,11 @@ class DeviceRegistry:
         with self._db.session() as s:
             from sqlalchemy import select
 
-            rows = s.execute(
-                select(DeviceRecord).order_by(DeviceRecord.last_seen_at.desc())
-            ).scalars().all()
+            rows = (
+                s.execute(select(DeviceRecord).order_by(DeviceRecord.last_seen_at.desc()))
+                .scalars()
+                .all()
+            )
             return list(rows)
 
     def get_by_fingerprint(self, fingerprint: str) -> DeviceRecord | None:
@@ -124,8 +126,7 @@ class DeviceRegistry:
             rec = s.get(DeviceRecord, fingerprint)
             if rec is None:
                 raise RegistryError(
-                    f"No device with fingerprint {fingerprint!r}. "
-                    "Run `hive device scan` first.",
+                    f"No device with fingerprint {fingerprint!r}. Run `hive device scan` first.",
                     details={"fingerprint": fingerprint},
                 )
             rec.device_id = device_id

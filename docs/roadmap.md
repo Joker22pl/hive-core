@@ -24,21 +24,24 @@
 **NIE w H0 (świadomie):** real I/O (USB/serial/SSH), SQLite, REST API, real flashing,
 real HIVE-IO firmware.
 
-## H1 — Device Discovery
+## H1 — Device Discovery ✅ closed 2026-07-31
 
-- Real USB discovery (`pyudev`) z cache i subskrypcją zdarzeń
-- Serial discovery (`pyserial`) — wykrywanie portów, stabilnych ścieżek
-- Udev rule installer (tworzenie `stable_path` aliasów)
-- Rejestr urządzeń jako SQLite DB z migracjami (alembic)
-- SSH discovery (skan LAN, fingerprint collection)
-- CLI: `hive device scan`, `hive device list`, `hive device inspect`, `hive device register`
-- In-memory + JSON lock store → SQLite lock store
-- Lock sweeper (porzucone locki)
-- Pierwsze uruchomienie z rzeczywistym sprzętem na stole
+- [x] Real USB discovery (`pyudev`) z cache i subskrypcją zdarzeń
+- [x] Serial discovery (`pyserial`) — wykrywanie portów, stabilnych ścieżek
+- [x] Udev rule installer (tworzenie `stable_path` aliasów)
+- [x] Rejestr urządzeń jako SQLite DB z migracjami (hand-rolled, H1)
+- [ ] SSH discovery (skan LAN, fingerprint collection) — H4
+- [x] CLI: `hive device scan`, `hive device list`, `hive device inspect`,
+      `hive device register`, `hive device db-list`,
+      `hive device install-udev-rules`
+- [x] In-memory + JSON lock store → SQLite lock store (`SqliteLockStore`)
+- [x] Lock sweeper (porzucone locki) — `hive lock sweep`
+- [x] Pierwsze uruchomienie z rzeczywistym sprzętem (manual; no USB na CI)
 
-**Kryterium akceptacji:** `hive device scan` zwraca listę urządzeń z
-`IdentificationStatus`; `hive device register` zapisuje nowy manifest do SQLite;
-`hive lock list` pokazuje aktywne locki.
+Evidence: `HIVE-H1-EVIDENCE-REPORT.md` (314 tests, 92% coverage, ruff clean).
+Reports + tags:
+- `v0.1.0-h1` → H1 closure commit
+- `v0.1.0-h1-docs` → H1 evidence report
 
 ## H2 — HIVE-IO Firmware + Protocol Client
 

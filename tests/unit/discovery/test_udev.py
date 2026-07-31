@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from hive.discovery.fingerprint import compute_fingerprint
 from hive.discovery.models import DiscoveredDevice
 from hive.discovery.udev import UdevRule, UdevRuleInstaller
@@ -19,7 +17,15 @@ def _device(**kwargs):
     are kept on the device record but excluded from the hash.
     """
     fp_kwargs = {}
-    for k in ("usb_vid", "usb_pid", "serial_number", "serial_by_id", "ssh_host", "ssh_port", "ssh_user"):
+    for k in (
+        "usb_vid",
+        "usb_pid",
+        "serial_number",
+        "serial_by_id",
+        "ssh_host",
+        "ssh_port",
+        "ssh_user",
+    ):
         if k in kwargs:
             fp_kwargs[k] = kwargs[k]
     defaults = {"source": "usb", "fingerprint": compute_fingerprint(source="usb", **fp_kwargs)}

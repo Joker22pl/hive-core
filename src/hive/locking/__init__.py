@@ -11,8 +11,8 @@ from hive.locking.service import (
     list_active,
     release,
 )
-from hive.locking.store import InMemoryLockStore, JsonLockStore, LockStore
 from hive.locking.sqlite_store import SqliteLockStore, SqliteLockStoreError
+from hive.locking.store import InMemoryLockStore, JsonLockStore, LockStore
 from hive.locking.sweeper import LockSweeper
 
 __all__ = [

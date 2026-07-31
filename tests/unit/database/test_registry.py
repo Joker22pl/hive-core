@@ -24,10 +24,20 @@ def registry(mem_db) -> DeviceRegistry:
 
 def _discovered(**kwargs):
     """Helper to build a DiscoveredDevice."""
-    fp_kwargs = {k: v for k, v in kwargs.items() if k in (
-        "usb_vid", "usb_pid", "serial_number", "serial_by_id",
-        "ssh_host", "ssh_port", "ssh_user",
-    )}
+    fp_kwargs = {
+        k: v
+        for k, v in kwargs.items()
+        if k
+        in (
+            "usb_vid",
+            "usb_pid",
+            "serial_number",
+            "serial_by_id",
+            "ssh_host",
+            "ssh_port",
+            "ssh_user",
+        )
+    }
     fp = compute_fingerprint(source="usb", **fp_kwargs)
     return DiscoveredDevice(source="usb", fingerprint=fp, **kwargs)
 
@@ -69,9 +79,7 @@ class TestRegistryUpsert:
         time.sleep(0.01)
         registry.upsert([d])
         rec2 = registry.get_by_fingerprint(d.fingerprint)
-        assert rec2.discovered_at == discovered_at_1, (
-            "discovered_at must not change on re-upsert"
-        )
+        assert rec2.discovered_at == discovered_at_1, "discovered_at must not change on re-upsert"
 
     def test_upsert_first_non_null_wins(self, registry):
         # First scan: serial_port only

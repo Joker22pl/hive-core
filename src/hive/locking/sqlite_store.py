@@ -28,7 +28,6 @@ from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select, text
-from sqlalchemy.exc import IntegrityError
 
 from hive.common.errors import HiveError
 from hive.common.models.lock import Lock
@@ -133,9 +132,7 @@ class SqliteLockStore(LockStore):
     def list_active(self) -> list[Lock]:
         with self._db.session() as s:
             now = datetime.now(UTC).isoformat()
-            rows = s.execute(
-                select(LockRecord).where(LockRecord.expires_at > now)
-            ).scalars().all()
+            rows = s.execute(select(LockRecord).where(LockRecord.expires_at > now)).scalars().all()
             return [self._to_model(r) for r in rows]
 
     # ----- H1 extras (used by sweeper and tests) -----
@@ -144,9 +141,7 @@ class SqliteLockStore(LockStore):
         """Return all expired locks (for the sweeper)."""
         with self._db.session() as s:
             now = datetime.now(UTC).isoformat()
-            rows = s.execute(
-                select(LockRecord).where(LockRecord.expires_at <= now)
-            ).scalars().all()
+            rows = s.execute(select(LockRecord).where(LockRecord.expires_at <= now)).scalars().all()
             return [self._to_model(r) for r in rows]
 
     def sweep_expired(self) -> int:

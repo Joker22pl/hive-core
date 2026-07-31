@@ -52,7 +52,7 @@ class Adapter(Protocol):
 
 def _require_pyudev():
     try:
-        import pyudev  # noqa: F401
+        import pyudev
 
         return pyudev
     except ImportError as e:
@@ -137,13 +137,17 @@ class UsbAdapter:
                     if "by-id" in (child.device_path or ""):
                         serial_by_id = child.device_node
                         break
-            except Exception:  # noqa: BLE001  — best-effort, never fail
+            except Exception:
                 pass
 
             description = parent.attributes.get("product")
             manufacturer = parent.attributes.get("manufacturer")
-            desc_str = description.decode("utf-8", errors="replace").strip() if description else None
-            mfg_str = manufacturer.decode("utf-8", errors="replace").strip() if manufacturer else None
+            desc_str = (
+                description.decode("utf-8", errors="replace").strip() if description else None
+            )
+            mfg_str = (
+                manufacturer.decode("utf-8", errors="replace").strip() if manufacturer else None
+            )
             if desc_str == "":
                 desc_str = None
             if mfg_str == "":

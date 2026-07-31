@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
@@ -83,9 +82,11 @@ class TestMigrations:
         from sqlalchemy import text
 
         with mem_db.session() as s:
-            tables = s.execute(
-                text("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
-            ).scalars().all()
+            tables = (
+                s.execute(text("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"))
+                .scalars()
+                .all()
+            )
             # devices + locks + alembic_version
             assert "devices" in tables
             assert "locks" in tables

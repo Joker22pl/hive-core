@@ -31,9 +31,7 @@ class LockSweeper:
         if not isinstance(store, SqliteLockStore):
             # Sweeper is meaningful only for the SQLite store — in-memory
             # and JSON stores auto-expire on read.
-            raise TypeError(
-                f"LockSweeper requires SqliteLockStore, got {type(store).__name__}"
-            )
+            raise TypeError(f"LockSweeper requires SqliteLockStore, got {type(store).__name__}")
         self._store = store
 
     def sweep(self) -> int:

@@ -30,15 +30,14 @@ from typing import Any
 
 def _require_pyserial():
     try:
-        import serial.tools.list_ports  # noqa: F401
+        import serial.tools.list_ports
 
         return serial.tools.list_ports
     except ImportError as e:
         from hive.common.errors import HiveError
 
         raise HiveError(
-            "pyserial is required for serial port enumeration. "
-            "Install with: pip install pyserial",
+            "pyserial is required for serial port enumeration. Install with: pip install pyserial",
             details={"missing_module": "pyserial"},
         ) from e
 

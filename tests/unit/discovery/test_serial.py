@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from hive.discovery.serial import SerialAdapter
@@ -149,5 +147,8 @@ class TestSerialAdapterImportGuard:
             return original_import(name, *args, **kwargs)
 
         monkeypatch.setattr("builtins.__import__", mock_import)
-        with pytest.raises(Exception):  # HiveError
+
+        from hive.common.errors import HiveError
+
+        with pytest.raises(HiveError):
             SerialAdapter()

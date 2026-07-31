@@ -19,20 +19,19 @@ The reason we include the stub now:
 
 from __future__ import annotations
 
-from typing import Any, Protocol
+from typing import Any
 
 from hive.common.errors import HiveError
 
 
 def _require_paramiko():
     try:
-        import paramiko  # noqa: F401
+        import paramiko
 
         return paramiko
     except ImportError as e:
         raise HiveError(
-            "paramiko is required for SSH discovery. "
-            "Install with: pip install paramiko",
+            "paramiko is required for SSH discovery. Install with: pip install paramiko",
             details={"missing_module": "paramiko"},
         ) from e
 

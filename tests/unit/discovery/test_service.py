@@ -9,8 +9,6 @@ from typing import Any
 
 import pytest
 
-from hive.discovery.fingerprint import compute_fingerprint
-from hive.discovery.models import DiscoveredDevice
 from hive.discovery.service import DiscoveryService
 
 
@@ -20,12 +18,12 @@ class FakeAdapter:
     def __init__(self, source: str, records: list[dict[str, Any]] | Exception) -> None:
         self.source = source
         self._records = records
-        self._exc = records if not isinstance(records, Exception) else records
+        self._is_exception = isinstance(records, Exception)
 
     def list_devices(self) -> list[dict[str, Any]]:
-        if isinstance(self._exc, Exception):
-            raise self._exc
-        return list(self._records)
+        if self._is_exception:
+            raise self._records  # type: ignore[misc]
+        return list(self._records)  # type: ignore[arg-type]
 
 
 def _record(source: str, **kwargs) -> dict[str, Any]:
@@ -147,7 +145,9 @@ class TestDiscoveryServiceScan:
             usb_adapter=FakeAdapter("usb", RuntimeError("usb broken")),
             serial_adapter=FakeAdapter("serial", RuntimeError("serial broken")),
         )
-        with pytest.raises(Exception):  # DiscoveryError
+        from hive.discovery.service import DiscoveryError
+
+        with pytest.raises(DiscoveryError):
             svc.scan()
 
     def test_devices_sorted_by_display_id(self):

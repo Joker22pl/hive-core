@@ -41,8 +41,12 @@ class TestComputeFingerprint:
         assert a == b, "Source must NOT affect fingerprint (used for dedup)"
 
     def test_ssh_fingerprint(self):
-        a = compute_fingerprint(source="ssh", ssh_host="192.168.1.10", ssh_port=22, ssh_user="ubuntu")
-        b = compute_fingerprint(source="ssh", ssh_host="192.168.1.10", ssh_port=22, ssh_user="ubuntu")
+        a = compute_fingerprint(
+            source="ssh", ssh_host="192.168.1.10", ssh_port=22, ssh_user="ubuntu"
+        )
+        b = compute_fingerprint(
+            source="ssh", ssh_host="192.168.1.10", ssh_port=22, ssh_user="ubuntu"
+        )
         assert a == b
 
     def test_ssh_different_user(self):

@@ -9,7 +9,6 @@ from hive.common.errors import HiveError
 from hive.discovery.fingerprint import compute_fingerprint
 from hive.discovery.models import DiscoveredDevice
 from hive.discovery.serial import SerialAdapter
-from hive.discovery.ssh import SshAdapter
 from hive.discovery.usb import UsbAdapter
 
 logger = logging.getLogger(__name__)
@@ -50,13 +49,17 @@ class DiscoveryService:
             include_serial: include pyserial enumeration.
             include_ssh: include SSH enumeration (off by default in H1).
         """
-        self._usb = usb_adapter if usb_adapter is not None else (UsbAdapter() if include_usb else None)
+        self._usb = (
+            usb_adapter if usb_adapter is not None else (UsbAdapter() if include_usb else None)
+        )
         self._serial = (
             serial_adapter
             if serial_adapter is not None
             else (SerialAdapter() if include_serial else None)
         )
-        self._ssh = ssh_adapter if ssh_adapter is not None else (ssh_adapter if include_ssh else None)
+        self._ssh = (
+            ssh_adapter if ssh_adapter is not None else (ssh_adapter if include_ssh else None)
+        )
 
     def scan(self) -> list[DiscoveredDevice]:
         """Scan all enabled adapters and return deduplicated devices.
@@ -72,7 +75,7 @@ class DiscoveryService:
                 continue
             try:
                 records.extend(adapter.list_devices())
-            except Exception as e:  # noqa: BLE001  — adapter failure is not fatal
+            except Exception as e:
                 logger.warning("Adapter %s failed: %s", name, e)
                 errors.append(e)
 

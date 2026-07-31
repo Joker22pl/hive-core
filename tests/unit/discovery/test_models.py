@@ -29,9 +29,7 @@ class TestDiscoveredDeviceValidation:
             DiscoveredDevice(source="usb", usb_vid="239a", usb_pid="XYZ", fingerprint="0" * 32)
 
     def test_vid_normalized_to_lowercase(self):
-        d = DiscoveredDevice(
-            source="usb", usb_vid="239A", usb_pid="811B", fingerprint="0" * 32
-        )
+        d = DiscoveredDevice(source="usb", usb_vid="239A", usb_pid="811B", fingerprint="0" * 32)
         assert d.usb_vid == "239a"
         assert d.usb_pid == "811b"
 
@@ -68,9 +66,7 @@ class TestDiscoveredDeviceProperties:
         assert d.has_strong_identity is True
 
     def test_strong_identity_false_no_serial(self):
-        d = DiscoveredDevice(
-            source="usb", usb_vid="239a", usb_pid="811b", fingerprint="0" * 32
-        )
+        d = DiscoveredDevice(source="usb", usb_vid="239a", usb_pid="811b", fingerprint="0" * 32)
         assert d.has_strong_identity is False
 
     def test_strong_identity_false_no_vid(self):
@@ -99,9 +95,7 @@ class TestDiscoveredDeviceProperties:
         assert d.display_id == "/dev/serial/by-id/usb-ESP32_ABC-if00"
 
     def test_display_id_serial_port(self):
-        d = DiscoveredDevice(
-            source="usb", serial_port="/dev/ttyACM0", fingerprint="0" * 32
-        )
+        d = DiscoveredDevice(source="usb", serial_port="/dev/ttyACM0", fingerprint="0" * 32)
         assert d.display_id == "/dev/ttyACM0"
 
     def test_display_id_ssh(self):
@@ -123,9 +117,7 @@ class TestFingerprintIntegration:
     """DiscoveredDevice accepts fingerprints from compute_fingerprint()."""
 
     def test_realistic_esp32(self):
-        fp = compute_fingerprint(
-            source="usb", usb_vid="303a", usb_pid="1001", serial_number="ABCD"
-        )
+        fp = compute_fingerprint(source="usb", usb_vid="303a", usb_pid="1001", serial_number="ABCD")
         d = DiscoveredDevice(
             source="usb",
             usb_vid="303a",

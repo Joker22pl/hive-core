@@ -20,8 +20,8 @@ from hive.database.models import Base, DeviceRecord, LockRecord
 from hive.database.registry import DeviceRegistry, RegistryError
 
 __all__ = [
-    "Base",
     "CURRENT_REVISION",
+    "Base",
     "DatabaseError",
     "DeviceRecord",
     "DeviceRegistry",
