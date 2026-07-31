@@ -99,12 +99,92 @@ def system_status() -> None:
 
 
 @device_app.command("scan")
-def device_scan() -> None:
-    """Scan for USB / serial / SSH devices (H1+)."""
+def device_scan(
+    no_persist: bool = typer.Option(
+        False,
+        "--no-persist",
+        help="Don't persist scan results to the SQLite registry.",
+    ),
+    no_usb: bool = typer.Option(False, "--no-usb", help="Skip USB enumeration."),
+    no_serial: bool = typer.Option(False, "--no-serial", help="Skip serial enumeration."),
+    no_ssh: bool = typer.Option(False, "--no-ssh", help="Skip SSH enumeration (H4 stub)."),
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    """Scan for USB / serial / SSH devices (H1).
+
+    Default: enumerate USB (pyudev) + serial (pyserial) and persist
+    results to the SQLite registry (XDG default path).
+    """
+    from hive.database.engine import HiveDatabase
+    from hive.database.registry import DeviceRegistry
+    from hive.discovery import DiscoveryService
+
+    try:
+        svc = DiscoveryService(
+            include_usb=not no_usb,
+            include_serial=not no_serial,
+            include_ssh=not no_ssh,
+        )
+        devices = svc.scan()
+    except Exception as e:
+        console.print(f"[red]Scan failed[/red]: {e}")
+        raise typer.Exit(code=1) from e
+
+    if not no_persist and devices:
+        try:
+            db = HiveDatabase.default()
+            reg = DeviceRegistry(db)
+            count = reg.upsert(devices)
+            persisted_note = f" (persisted {count} to registry)"
+        except Exception as e:
+            persisted_note = f" (persist failed: {e})"
+    elif not devices:
+        persisted_note = ""
+    else:
+        persisted_note = " (--no-persist)"
+
+    if json_output:
+        from hive.cli._io import emit_json
+
+        emit_json(
+            {
+                "scanned": len(devices),
+                "devices": [d.model_dump(mode="json") for d in devices],
+            }
+        )
+        return
+
     console.print(
-        "[yellow]device scan[/yellow] is planned for H1 "
-        "(real USB / serial discovery via pyudev + pyserial)."
+        f"[green]Scanned[/green] {len(devices)} device(s)"
+        f"{persisted_note}"
     )
+
+    if not devices:
+        return
+
+    table = Table(title=f"Discovered Devices ({len(devices)})")
+    table.add_column("source", style="cyan")
+    table.add_column("VID:PID", style="white")
+    table.add_column("serial", style="white")
+    table.add_column("port / ssh", style="white")
+    table.add_column("fingerprint", style="dim")
+    for d in devices:
+        vid_pid = (
+            f"{d.usb_vid}:{d.usb_pid}" if d.usb_vid and d.usb_pid else "—"
+        )
+        port_or_ssh = (
+            d.serial_port
+            or (f"{d.ssh_user}@{d.ssh_host}:{d.ssh_port}" if d.ssh_host else "—")
+            or "—"
+        )
+        table.add_row(
+            d.source,
+            vid_pid,
+            d.serial_number or "—",
+            port_or_ssh,
+            d.fingerprint[:16] + "…",
+        )
+    console.print(table)
 
 
 @device_app.command("list")
@@ -177,13 +257,166 @@ def device_inspect(
 
 @device_app.command("register")
 def device_register(
-    device_id: str = typer.Argument(...),
+    fingerprint: str = typer.Option(
+        ...,
+        "--fingerprint",
+        "-f",
+        help="Fingerprint of the discovered device (16+ hex chars).",
+    ),
+    device_id: str = typer.Option(
+        ...,
+        "--device-id",
+        help="Logical device_id (matches a registry/<id>.yaml).",
+    ),
+    manifest: Path | None = typer.Option(  # noqa: B008
+        None,
+        "--manifest",
+        help="Path to a DeviceManifest YAML to link (relative to repo root).",
+    ),
 ) -> None:
-    """Register a new device (interactive; H1+ uses SQLite)."""
+    """Claim a discovered device and assign it a logical device_id (H1).
+
+    Looks up the device by fingerprint (from `hive device scan`) and
+    records the assignment in the SQLite registry. The device_id can
+    later be used with `hive lock acquire <device_id>`.
+    """
+    from hive.database.engine import HiveDatabase
+    from hive.database.registry import DeviceRegistry, RegistryError
+
+    try:
+        db = HiveDatabase.default()
+        reg = DeviceRegistry(db)
+        rec = reg.claim(
+            fingerprint,
+            device_id=device_id,
+            manifest_path=manifest,
+        )
+    except RegistryError as e:
+        console.print(f"[red]Claim failed[/red]: {e.message}")
+        raise typer.Exit(code=1) from e
+
     console.print(
-        f"[yellow]device register {device_id}[/yellow] is planned for H1 "
-        "(interactive wizard + SQLite persistence)."
+        f"[green]Claimed[/green] fingerprint={fingerprint[:16]}… "
+        f"device_id={rec.device_id}"
+        + (f" manifest={rec.manifest_path}" if rec.manifest_path else "")
     )
+
+
+@device_app.command("db-list")
+def device_db_list(
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    """List devices persisted in the SQLite registry (H1)."""
+    from hive.database.engine import HiveDatabase
+    from hive.database.registry import DeviceRegistry
+
+    db = HiveDatabase.default()
+    reg = DeviceRegistry(db)
+    devices = reg.list_devices()
+
+    if json_output:
+        from hive.cli._io import emit_json
+
+        emit_json(
+            {
+                "devices": [
+                    {
+                        "fingerprint": d.fingerprint,
+                        "device_id": d.device_id,
+                        "usb_vid": d.usb_vid,
+                        "usb_pid": d.usb_pid,
+                        "serial_number": d.serial_number,
+                        "serial_port": d.serial_port,
+                        "serial_by_id": d.serial_by_id,
+                        "ssh_host": d.ssh_host,
+                        "ssh_user": d.ssh_user,
+                        "last_seen_at": d.last_seen_at,
+                        "manifest_path": d.manifest_path,
+                    }
+                    for d in devices
+                ],
+            }
+        )
+        return
+
+    if not devices:
+        console.print("[dim]No devices in registry. Run `hive device scan` first.[/dim]")
+        return
+
+    table = Table(title=f"Registry ({len(devices)})")
+    table.add_column("device_id", style="cyan")
+    table.add_column("VID:PID", style="white")
+    table.add_column("serial", style="white")
+    table.add_column("port / ssh", style="white")
+    table.add_column("last_seen", style="dim")
+    table.add_column("fingerprint", style="dim")
+    for d in devices:
+        vid_pid = f"{d.usb_vid}:{d.usb_pid}" if d.usb_vid and d.usb_pid else "—"
+        port_or_ssh = (
+            d.serial_port
+            or (f"{d.ssh_user}@{d.ssh_host}" if d.ssh_host else "—")
+            or "—"
+        )
+        table.add_row(
+            d.device_id or "—",
+            vid_pid,
+            d.serial_number or "—",
+            port_or_ssh,
+            d.last_seen_at[:19] if d.last_seen_at else "—",
+            d.fingerprint[:16] + "…",
+        )
+    console.print(table)
+
+
+@device_app.command("install-udev-rules")
+def device_install_udev_rules(
+    output: Path | None = typer.Option(  # noqa: B008
+        None,
+        "--output",
+        "-o",
+        help="Write rules to this file instead of /etc/udev/rules.d/99-hive.rules.",
+    ),
+    apply: bool = typer.Option(
+        False,
+        "--apply",
+        help="Write to /etc/udev/rules.d/99-hive.rules (requires sudo).",
+    ),
+) -> None:
+    """Generate udev rules for stable /dev/hive/<name> symlinks (H1).
+
+    Default: print the generated rules to stdout.
+    With --output <path>: write to that path.
+    With --apply: write to /etc/udev/rules.d/99-hive.rules (requires sudo).
+    """
+    from hive.discovery import DiscoveryService
+    from hive.discovery.udev import UdevRuleInstaller
+
+    svc = DiscoveryService()
+    devices = svc.scan()
+    installer = UdevRuleInstaller(
+        install_path=output if output is not None else UdevRuleInstaller.DEFAULT_PATH
+    )
+    rules_text = installer.generate(devices)
+
+    if apply and output is None:
+        try:
+            installer.install(rules_text)
+            console.print(
+                f"[green]Wrote[/green] {installer.install_path}\n"
+                "Reload with: sudo udevadm control --reload-rules && sudo udevadm trigger"
+            )
+        except Exception as e:
+            console.print(f"[red]Install failed[/red]: {e}")
+            raise typer.Exit(code=1) from e
+    elif output is not None:
+        installer.install(rules_text)
+        console.print(f"[green]Wrote[/green] {output}")
+    else:
+        # Just print to stdout for inspection
+        import sys
+
+        sys.stdout.write(rules_text)
+        sys.stdout.flush()
 
 
 # ---------- artifact ----------
@@ -395,11 +628,28 @@ def lock_release(
 def lock_list(
     json_output: bool = typer.Option(False, "--json"),
     json_path: Path | None = typer.Option(None, "--json-store"),  # noqa: B008
+    sqlite: bool = typer.Option(
+        False,
+        "--sqlite",
+        help="Use the SQLite registry's lock store instead of in-memory / JSON.",
+    ),
 ) -> None:
-    """List active locks."""
+    """List active locks.
+
+    By default uses an in-memory store (per-process, lost on exit).
+    With --json-store <path>: persistent JSON file store.
+    With --sqlite: persistent SQLite store at the default registry path.
+    """
     from hive.cli._lock import build_default_service, emit_json
 
-    service = build_default_service(json_path=str(json_path) if json_path else None)
+    if sqlite:
+        from hive.database.engine import HiveDatabase
+        from hive.locking import LockService, SqliteLockStore
+
+        db = HiveDatabase.default()
+        service = LockService(SqliteLockStore(db))
+    else:
+        service = build_default_service(json_path=str(json_path) if json_path else None)
     locks = service.list_active()
 
     if json_output:
@@ -421,6 +671,25 @@ def lock_list(
             str(lock.expires_at),
         )
     console.print(table)
+
+
+@lock_app.command("sweep")
+def lock_sweep(
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    """Remove all expired locks from the SQLite registry (H1)."""
+    from hive.database.engine import HiveDatabase
+    from hive.locking import LockSweeper, SqliteLockStore
+
+    db = HiveDatabase.default()
+    sweeper = LockSweeper(SqliteLockStore(db))
+    removed = sweeper.sweep()
+    if json_output:
+        from hive.cli._io import emit_json
+
+        emit_json({"removed": removed})
+        return
+    console.print(f"[green]Swept[/green] {removed} expired lock(s)")
 
 
 # ---------- flash / verify / recover / evidence ----------

@@ -21,16 +21,28 @@ def runner() -> CliRunner:
 # ---------- device ----------
 
 
-def test_device_scan_stub(runner: CliRunner) -> None:
-    res = runner.invoke(app, ["device", "scan"])
+def test_device_scan_runs(runner: CliRunner) -> None:
+    """device scan — H1 real impl runs (no devices in test env, exits 0)."""
+    res = runner.invoke(app, ["device", "scan", "--no-persist"])
     assert res.exit_code == 0
-    assert "planned for H1" in res.stdout
+    assert "Scanned" in res.stdout
 
 
-def test_device_register_stub(runner: CliRunner) -> None:
-    res = runner.invoke(app, ["device", "register", "my-dev"])
-    assert res.exit_code == 0
-    assert "my-dev" in res.stdout
+def test_device_register_claim_unknown_fingerprint(runner: CliRunner) -> None:
+    """device register with an unknown fingerprint fails cleanly (exit 1)."""
+    res = runner.invoke(
+        app,
+        [
+            "device",
+            "register",
+            "--fingerprint",
+            "0123456789abcdef" * 2,
+            "--device-id",
+            "my-dev",
+        ],
+    )
+    assert res.exit_code == 1
+    assert "Claim failed" in res.stdout
 
 
 def test_device_inspect_clean_registry(runner: CliRunner) -> None:

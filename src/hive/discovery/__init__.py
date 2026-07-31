@@ -19,6 +19,7 @@ from hive.discovery.fingerprint import compute_fingerprint
 from hive.discovery.models import DiscoveredDevice
 from hive.discovery.serial import SerialAdapter
 from hive.discovery.service import DiscoveryError, DiscoveryService
+from hive.discovery.ssh import SshAdapter
 from hive.discovery.udev import UdevError, UdevRule, UdevRuleInstaller
 from hive.discovery.usb import Adapter, AdapterError, UsbAdapter
 
@@ -29,6 +30,7 @@ __all__ = [
     "DiscoveryError",
     "DiscoveryService",
     "SerialAdapter",
+    "SshAdapter",
     "UdevError",
     "UdevRule",
     "UdevRuleInstaller",

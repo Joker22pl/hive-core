@@ -9,6 +9,7 @@ from hive.common.errors import HiveError
 from hive.discovery.fingerprint import compute_fingerprint
 from hive.discovery.models import DiscoveredDevice
 from hive.discovery.serial import SerialAdapter
+from hive.discovery.ssh import SshAdapter
 from hive.discovery.usb import UsbAdapter
 
 logger = logging.getLogger(__name__)

@@ -58,24 +58,30 @@ class SerialAdapter:
         self._list_ports = _require_pyserial()
 
     def list_devices(self) -> list[dict[str, Any]]:
-        """Enumerate all serial ports visible to pyserial."""
+        """Enumerate all serial ports visible to pyserial.
+
+        Filters out ports that are clearly not USB-attached (no VID/PID
+        AND not in the typical USB-serial naming patterns /dev/ttyUSB*
+        or /dev/ttyACM*). This avoids surfacing kernel-internal UARTs
+        (e.g. /dev/ttyS*) which have no discoverable identity.
+        """
         results: list[dict[str, Any]] = []
         for port in self._list_ports.comports():
-            # ListPortInfo fields:
-            #   device: str (e.g. "/dev/ttyACM0")
-            #   name:   str (e.g. "ttyACM0")
-            #   description: str (e.g. "Adafruit Feather ESP32-S3")
-            #   hwid:   str (e.g. "USB VID:PID=239a:811b SER=ABC123 LOCATION=1-2.3")
-            #   vid:    int | None
-            #   pid:    int | None
-            #   serial_number: str | None
-            #   location: str | None  (e.g. "1-2.3")
-            #   manufacturer: str | None
-            #   product: str | None
-            #   interface: str | None
-
             vid_int = getattr(port, "vid", None)
             pid_int = getattr(port, "pid", None)
+            device_path = port.device or ""
+
+            # Filter: must have VID/PID OR be in a USB-serial naming pattern
+            has_vid_pid = vid_int is not None and pid_int is not None
+            looks_like_usb_serial = (
+                "/dev/ttyUSB" in device_path
+                or "/dev/ttyACM" in device_path
+                or "/dev/bus/usb" in device_path
+            )
+            if not has_vid_pid and not looks_like_usb_serial:
+                # Kernel UART or other non-USB serial — skip silently.
+                continue
+
             usb_vid = f"{vid_int:04x}" if vid_int is not None else None
             usb_pid = f"{pid_int:04x}" if pid_int is not None else None
 
