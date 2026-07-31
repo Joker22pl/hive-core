@@ -1,9 +1,11 @@
 # HIVE Core
 
 > **Hermes Integration & Verification Environment — Core**
-> **Wersja:** v0.1.0 (H0 — fundament projektu)
-> **Status:** 🟢 H0 closed (gates met; H1 may begin)
+> **Wersja:** v0.1.0 (H1 — Device Discovery)
+> **Status:** 🟢 H1 closed (314 tests, 92% coverage, CI green)
 > **H0 metrics:** 200 unit tests pass, ruff clean, coverage 96%
+> **H1 metrics:** 314 tests pass (unit + integration), ruff clean, coverage 92%
+> **Evidence:** `HIVE-H1-EVIDENCE-REPORT.md`
 > **Owner:** gaja-robotics (profil Hermes)
 > **HEOS:** oparty na `HEOS/CONSTITUTION.md` v1.5+
 > **Licencja:** MIT
@@ -38,8 +40,8 @@ HIVE Core:
 
 | Etap | Status | Opis |
 |------|--------|------|
-| H0 | 🟡 | Fundament — modele danych, dokumentacja, szkielety CLI, brak prawdziwego flashowania |
-| H1 | ⚪ | Device Discovery (USB/serial/SSH, udev, stabilne identyfikatory) |
+| H0 | 🟢 | Fundament — modele danych, dokumentacja, szkielety CLI, brak prawdziwego flashowania |
+| H1 | 🟢 | Device Discovery — USB/serial (pyudev/pyserial), SQLite registry, lock sweeper |
 | H2 | ⚪ | HIVE-IO firmware, protokół, heartbeat, E-stop |
 | H3 | ⚪ | Flashing + Artifact Registry + rollback |
 | H4 | ⚪ | Linux / ROS 2 przez SSH |
