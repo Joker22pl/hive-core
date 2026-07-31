@@ -82,8 +82,10 @@ jobs:
           HIVE_DB_URL="sqlite:///:memory:" hive system status
           HIVE_DB_URL="sqlite:///:memory:" hive device list
           HIVE_DB_URL="sqlite:///:memory:" hive device scan --no-persist --no-usb --no-serial
-          # Lock smoke test (in-memory, ephemeral)
-          OUT=$(HIVE_DB_URL="sqlite:///:memory:" hive lock acquire smoke-test --owner smoke --operation test --json)
+          # Lock smoke test using JSON file store (state survives between calls).
+          SMOKE_STORE="$(mktemp /tmp/hive-smoke-XXXXXX.json)"
+          OUT=$(hive lock acquire smoke-test --owner smoke --operation test --json --json-store "$SMOKE_STORE")
           echo "$OUT"
           SID=$(echo "$OUT" | python -c 'import json,sys; print(json.loads(sys.stdin.read())["lock"]["session_id"])')
-          HIVE_DB_URL="sqlite:///:memory:" hive lock release smoke-test --session-id "$SID" --json
+          hive lock release smoke-test --session-id "$SID" --json --json-store "$SMOKE_STORE"
+          rm -f "$SMOKE_STORE"
