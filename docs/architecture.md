@@ -1,6 +1,7 @@
 # HIVE Core — Architecture
 
-> **Status:** H0 (fundament). Wiele elementów ma charakter szkieletowy.
+> **Status:** H1 closed (Device Discovery — USB/serial/SQLite registry/locks).
+> H2+ (HIVE-IO firmware, flashing, SSH, REST API) still planned.
 > **Źródło prawdy:** [`vision.md`](vision.md).
 
 ## 1. Cel
@@ -65,10 +66,10 @@ HIVE-IO jest warstwą sprzętową wymuszającą bezpieczne stany zasilania, RESE
 | `hive.adapters.rp2040` | RP2040 flashing (UF2 / picotool) | szkielet |
 | `hive.adapters.ssh` | SSH transport (paramiko) | szkielet |
 | `hive.verification` | Egzekucja profili weryfikacyjnych | szkielet |
-| `hive.locking` | Resource locks z lease | ✅ (logika, brak persystencji w H0) |
+| `hive.locking` | Resource locks z lease | ✅ (H0 in-memory + JSON; H1 SqliteLockStore + sweeper) |
 | `hive.recovery` | Strategie recovery per klasa urządzenia | szkielet |
 | `hive.evidence` | Generowanie Evidence Bundle | szkielet |
-| `hive.database` | SQLite state store | nie w H0 (H1+) |
+| `hive.database` | SQLite state store (registry + locks) | ✅ H1 (DeviceRegistry + LockRecord + migration 0001) |
 | `hive.io_controller` | Klient HIVE-IO (USB CDC + JSON Lines) | szkielet |
 | `hive.common` | Modele współdzielone, logowanie, błędy | ✅ |
 
@@ -81,7 +82,7 @@ funkcjonalność zostanie zaimplementowana.
 
 ```
 wykrycie urządzenia
-  → hive.discovery.scan()                # H1+: real USB/serial
+  → hive.discovery.scan()                # ✅ H1: real USB/serial (pyudev + pyserial)
   → status identyfikacji (MATCH_CONFIRMED / AMBIGUOUS / UNKNOWN / ...)
   → jeśli !MATCH_CONFIRMED → STOP (refuse to flash)
 
@@ -134,10 +135,10 @@ Pełna specyfikacja w [`../schemas/...`] + `hive.locking`. Każda operacja sprz�
 3. ma lease z czasem wygaśnięcia (TTL),
 4. odnawia lease przez heartbeat (opcjonalnie — w H0 lease nie jest auto-renewed),
 5. zwalnia lock jawnie lub po wygaśnięciu,
-6. obsługuje porzucone locki (sweeper — H1+).
+6. obsługuje porzucone locki (sweeper — ✅ H1: `LockSweeper`).
 
 H0 dostarcza model i logikę in-memory + opcjonalny JSON store (`hive.locking.store.JsonLockStore`).
-SQLite lock store jest zaplanowany na H1.
+H1 dostarcza `SqliteLockStore` (persistent) + `LockSweeper` (auto-cleanup).
 
 ## 7. Evidence bundle
 
