@@ -12,6 +12,8 @@ from hive.locking.service import (
     release,
 )
 from hive.locking.store import InMemoryLockStore, JsonLockStore, LockStore
+from hive.locking.sqlite_store import SqliteLockStore, SqliteLockStoreError
+from hive.locking.sweeper import LockSweeper
 
 __all__ = [
     "InMemoryLockStore",
@@ -19,6 +21,9 @@ __all__ = [
     "LockAcquireResult",
     "LockService",
     "LockStore",
+    "LockSweeper",
+    "SqliteLockStore",
+    "SqliteLockStoreError",
     "acquire",
     "list_active",
     "release",
