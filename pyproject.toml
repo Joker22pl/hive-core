@@ -23,7 +23,10 @@ classifiers = [
   "Topic :: System :: Hardware",
 ]
 
-# Runtime dependencies (H0 introduces only the ones used in H0 — others come in H1+)
+# Runtime dependencies
+# H0 baseline (kept): pydantic, PyYAML, jsonschema, typer, rich, json-logger
+# H1 additions: pyudev (USB), pyserial (serial), paramiko (SSH),
+#               SQLAlchemy + alembic (SQLite registry)
 dependencies = [
   "pydantic>=2.6",
   "PyYAML>=6.0",
@@ -31,6 +34,11 @@ dependencies = [
   "typer>=0.12",
   "rich>=13.7",
   "python-json-logger>=2.0",
+  "pyudev>=0.24",
+  "pyserial>=3.5",
+  "paramiko>=3.4",
+  "SQLAlchemy>=2.0",
+  "alembic>=1.13",
 ]
 
 [project.optional-dependencies]
@@ -39,13 +47,6 @@ dev = [
   "pytest-cov>=4.1",
   "ruff>=0.4",
 ]
-ssh = [
-  "paramiko>=3.4",
-]
-usb = [
-  "pyudev>=0.24",
-  "pyserial>=3.5",
-]
 esp32 = [
   "esptool>=4.7",
 ]
@@ -53,9 +54,6 @@ rp2040 = [
   # picotool is a binary; installation handled separately (see docs/).
 ]
 all = [
-  "paramiko>=3.4",
-  "pyudev>=0.24",
-  "pyserial>=3.5",
   "esptool>=4.7",
 ]
 

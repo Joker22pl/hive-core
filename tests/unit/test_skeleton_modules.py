@@ -26,15 +26,15 @@ def test_discovery_module_construction() -> None:
     assert svc is not None
 
 
-def test_discovery_scan_raises_not_implemented_in_stage() -> None:
-    """DiscoveryService.scan raises NotImplementedInStageError."""
+def test_discovery_scan_no_devices_returns_empty() -> None:
+    """DiscoveryService.scan returns empty list when no devices found (H1 real impl)."""
     from hive.discovery import DiscoveryService
 
-    svc = DiscoveryService()
-    with pytest.raises(NotImplementedInStageError) as exc_info:
-        svc.scan()
-    assert exc_info.value.feature == "DiscoveryService.scan"
-    assert exc_info.value.planned_stage == "H1"
+    svc = DiscoveryService(
+        include_usb=False,
+        include_serial=False,
+    )
+    assert svc.scan() == []
 
 
 # ---------- verification ----------
