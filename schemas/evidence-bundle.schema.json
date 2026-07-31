@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Joker22pl/hive-core/schemas/evidence-bundle.schema.json",
+  "title": "HIVE Evidence Bundle",
+  "description": "Evidence bundle dla operacji HIVE. Zawiera identyfikatory, manifesty, logi, wyniki testów, zdarzenia bezpieczeństwa i finalny status.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bundle_id", "operation", "started_at", "ended_at", "final_status"],
+  "properties": {
+    "bundle_id": {
+      "type": "string",
+      "description": "UUID v4 lub deterministyczny ID bundle'a.",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{2,}$"
+    },
+    "operation": {
+      "type": "string",
+      "description": "Typ operacji (np. flash, verify, recovery, build).",
+      "enum": ["scan", "identify", "register", "build", "flash", "verify", "recovery", "deploy", "rollback", "io-control"]
+    },
+    "device": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "device_id": {"type": "string"},
+        "manifest_path": {"type": "string"},
+        "identification_status": {
+          "type": "string",
+          "enum": [
+            "MATCH_CONFIRMED", "MATCH_AMBIGUOUS", "DEVICE_UNKNOWN", "DEVICE_OFFLINE",
+            "DEVICE_BUSY", "PROJECT_MISMATCH", "ROLE_MISMATCH", "FIRMWARE_INCOMPATIBLE",
+            "RECOVERY_REQUIRED", "SAFETY_INTERLOCK_OPEN", "ESTOP_ACTIVE"
+          ]
+        },
+        "observed_port": {"type": ["string", "null"]},
+        "observed_serial": {"type": ["string", "null"]}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {"type": "string"},
+        "manifest_path": {"type": "string"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}
+      }
+    },
+    "git": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hive_core_repo": {"type": "string"},
+        "hive_core_commit": {"type": "string"},
+        "project_repo": {"type": ["string", "null"]},
+        "project_commit": {"type": ["string", "null"]},
+        "dirty": {"type": "boolean"}
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hive_host": {"type": "string"},
+        "hive_user": {"type": "string"},
+        "python_version": {"type": "string"},
+        "platform": {"type": "string"},
+        "kernel": {"type": "string"}
+      }
+    },
+    "tool_versions": {
+      "type": "object",
+      "additionalProperties": {"type": "string"},
+      "description": "Wersje narzędzi (esptool, picotool, paramiko, idf.py, ...)."
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command"],
+        "properties": {
+          "command": {"type": "string"},
+          "params": {"type": "object", "additionalProperties": true},
+          "exit_code": {"type": ["integer", "null"]},
+          "duration_s": {"type": "number", "minimum": 0}
+        }
+      }
+    },
+    "logs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "build_log_path": {"type": ["string", "null"]},
+        "flash_log_path": {"type": ["string", "null"]},
+        "device_log_path": {"type": ["string", "null"]},
+        "io_log_path": {"type": ["string", "null"]}
+      }
+    },
+    "step_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step_id", "status"],
+        "properties": {
+          "step_id": {"type": "string"},
+          "status": {"type": "string", "enum": ["passed", "failed", "error", "skipped"]},
+          "duration_s": {"type": "number", "minimum": 0},
+          "observed": {"type": ["string", "null"]},
+          "error_class": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "safety_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event", "timestamp"],
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "ESTOP_PRESSED", "ESTOP_RELEASED",
+              "MOTOR_ENABLE_OFF", "MOTOR_ENABLE_ON",
+              "POWER_OFF", "POWER_ON", "POWER_CYCLE",
+              "CONTROL_LINK_LOST", "CONTROL_LINK_RESTORED",
+              "RECOVERY_ATTEMPT", "RECOVERY_FAILED", "ESCALATION",
+              "LOCK_ACQUIRED", "LOCK_RELEASED", "LOCK_EXPIRED"
+            ]
+          },
+          "timestamp": {"type": "string", "format": "date-time"},
+          "details": {"type": "object", "additionalProperties": true}
+        }
+      }
+    },
+    "recovery_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "strategy": {"type": "string"},
+          "attempt": {"type": "integer", "minimum": 1},
+          "outcome": {"type": "string", "enum": ["passed", "failed", "escalated"]},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "performed": {"type": "boolean"},
+        "from_artifact_id": {"type": ["string", "null"]},
+        "to_artifact_id": {"type": ["string", "null"]},
+        "timestamp": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "started_at": {"type": "string", "format": "date-time"},
+    "ended_at": {"type": "string", "format": "date-time"},
+    "final_status": {
+      "type": "string",
+      "enum": ["passed", "failed", "error", "aborted", "escalated"]
+    }
+  }
+}

@@ -1,0 +1,45 @@
+# HIVE-IO Controller (osobny RPi Pico)
+
+device_id: hive-io-controller
+display_name: HIVE-IO controller (Pico A)
+type: io_controller
+board: raspberry-pi-pico
+project: HIVE
+role: io-controller
+
+identity:
+  usb_vid: "2E8A"
+  usb_pid: "000A"
+  serial_number: null              # TODO: odkryć (H1)
+  stable_path: /dev/hive/io-controller
+
+capabilities:
+  - usb-cdc
+  - power-control
+  - reset-control
+  - boot-control
+  - motor-enable
+  - estop-sense
+  - watchdog
+
+firmware:
+  target: rp2040
+  expected_project: hive-io
+  known_good_artifact: null        # firmware HIVE-IO jest budowany w repo hive-io
+
+safety:
+  motor_power_required: true
+  motor_enable_must_be_off_during_flash: true
+  automatic_power_cycle_allowed: false     # HIVE-IO NIE power-cycle'uje sam siebie
+  automatic_flash_allowed: false          # HIVE-IO flashuje się przez inny mechanizm (BOOTSEL)
+
+recovery:
+  strategy: none                    # HIVE-IO NIE podlega recovery; jeśli padnie → ręczna wymiana
+  max_attempts: 0
+  escalate_to_human_after: 1
+
+metadata:
+  notes: |
+    Stały kontroler stanowiska. Nie jest urządzeniem testowym.
+    Bootuje w safe_state. Watchdog wymusza safe_state przy utracie heartbeat.
+    HIVE Core NIGDY nie flashuje HIVE-IO — flash odbywa się przez BOOTSEL ręcznie.

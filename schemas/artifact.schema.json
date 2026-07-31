@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Joker22pl/hive-core/schemas/artifact.schema.json",
+  "title": "HIVE Artifact Manifest",
+  "description": "Manifest artefaktu firmware lub pakietu wdrożeniowego.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact_id", "project", "target", "artifact", "build", "status"],
+  "properties": {
+    "artifact_id": {
+      "type": "string",
+      "description": "UUID v4 identyfikator artefaktu.",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "project": {"type": "string"},
+    "target": {"type": "string", "description": "np. esp32s3, rp2040, debian-bookworm"},
+    "target_board": {"type": "string"},
+    "target_role": {"type": "string"},
+    "git": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo", "commit_sha"],
+      "properties": {
+        "repo": {"type": "string"},
+        "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+        "branch": {"type": "string"},
+        "dirty": {"type": "boolean", "default": false}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "format"],
+      "properties": {
+        "path": {"type": "string"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "format": {
+          "type": "string",
+          "enum": ["esp32-binary", "rp2040-uf2", "deb", "tar.zst", "container-image"]
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["built_at", "build_command"],
+      "properties": {
+        "toolchain_version": {"type": "string"},
+        "build_profile": {"type": "string"},
+        "build_host": {"type": "string"},
+        "built_at": {"type": "string", "format": "date-time"},
+        "build_command": {"type": "string"},
+        "build_duration_s": {"type": "number", "minimum": 0}
+      }
+    },
+    "compatible_devices": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["profile_id", "result"],
+        "properties": {
+          "profile_id": {"type": "string"},
+          "result": {"type": "string", "enum": ["passed", "failed", "error", "skipped"]},
+          "evidence_bundle_id": {"type": ["string", "null"]},
+          "duration_s": {"type": "number", "minimum": 0}
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["built", "tested", "verified", "known-good", "rejected", "superseded", "archived"]
+    },
+    "superseded_by": {"type": ["string", "null"]},
+    "evidence_bundle_id": {"type": ["string", "null"]}
+  }
+}

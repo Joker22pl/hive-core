@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Joker22pl/hive-core/schemas/device.schema.json",
+  "title": "HIVE Device Manifest",
+  "description": "Manifest pojedynczego urządzenia w HIVE. Każde urządzenie (MCU, host Linux, kontroler IO) musi mieć manifest; bez niego operacje są blokowane.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["device_id", "type", "project", "role", "identity"],
+  "properties": {
+    "device_id": {
+      "type": "string",
+      "description": "Unikalne ID urządzenia w HIVE (np. esp32s3-imp2-motor-01).",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Czytelna nazwa (np. 'IMP2 motor controller')."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["microcontroller", "linux_host", "io_controller", "programmer", "debugger"],
+      "description": "Klasa urządzenia."
+    },
+    "board": {
+      "type": "string",
+      "description": "Konkretna płytka (np. esp32-s3-pico, raspberry-pi-pico)."
+    },
+    "project": {
+      "type": "string",
+      "description": "Projekt, do którego urządzenie należy (np. IMP2, ARP-AGRI)."
+    },
+    "role": {
+      "type": "string",
+      "description": "Rola w projekcie (np. motor-controller, sensor-controller)."
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["usb_vid", "usb_pid"],
+      "properties": {
+        "usb_vid": {
+          "type": ["string", "null"],
+          "description": "USB Vendor ID (hex, 4 znaki).",
+          "pattern": "^[0-9A-Fa-f]{4}$"
+        },
+        "usb_pid": {
+          "type": ["string", "null"],
+          "description": "USB Product ID (hex, 4 znaki).",
+          "pattern": "^[0-9A-Fa-f]{4}$"
+        },
+        "serial_number": {
+          "type": ["string", "null"],
+          "description": "Numer seryjny urządzenia (opcjonalny, ale zalecany)."
+        },
+        "stable_path": {
+          "type": ["string", "null"],
+          "description": "Alias ścieżki (np. /dev/hive/imp2-motor-controller)."
+        },
+        "ssh": {
+          "type": ["object", "null"],
+          "description": "Parametry SSH (dla linux_host).",
+          "additionalProperties": false,
+          "properties": {
+            "host": {"type": "string"},
+            "port": {"type": "integer", "minimum": 1, "maximum": 65535, "default": 22},
+            "user": {"type": "string"},
+            "host_key_fingerprint": {
+              "type": "string",
+              "description": "SHA-256 fingerprint klucza hosta (np. SHA256:abcd...).",
+              "pattern": "^SHA256:[A-Za-z0-9+/=]+$"
+            },
+            "credential_reference": {
+              "type": ["string", "null"],
+              "description": "Referencja do sekretu (NIGDY klucz w jawnej postaci)."
+            }
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "Zdolności urządzenia.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "usb-cdc", "uart", "spi", "i2c", "can",
+          "flash", "reset", "reset-control", "boot-control",
+          "motor-control", "motor-enable", "microros-serial",
+          "power-control", "estop-sense", "watchdog",
+          "ssh", "systemd", "ros2"
+        ]
+      }
+    },
+    "firmware": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Build target (np. esp32s3, rp2040)."
+        },
+        "expected_project": {
+          "type": "string",
+          "description": "Oczekiwany projekt firmware (do walidacji roli)."
+        },
+        "known_good_artifact": {
+          "type": ["string", "null"],
+          "description": "Referencja do artifact_id używanego jako known-good fallback (UUID lub null)."
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "motor_power_required": {"type": "boolean", "default": false},
+        "motor_enable_must_be_off_during_flash": {"type": "boolean", "default": true},
+        "automatic_power_cycle_allowed": {"type": "boolean", "default": false},
+        "automatic_flash_allowed": {"type": "boolean", "default": false}
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "description": "ID strategii recovery (np. esp32-bootloader-reflash).",
+          "enum": [
+            "esp32-bootloader-reflash",
+            "rp2040-bootsel-reflash",
+            "linux-ssh-service-restart",
+            "linux-host-power-cycle",
+            "none"
+          ]
+        },
+        "max_attempts": {"type": "integer", "minimum": 0, "maximum": 10, "default": 3},
+        "escalate_to_human_after": {"type": "integer", "minimum": 0, "maximum": 10, "default": 3}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Dowolne metadane specyficzne dla projektu."
+    }
+  }
+}

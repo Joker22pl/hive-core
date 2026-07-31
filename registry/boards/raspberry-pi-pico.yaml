@@ -1,0 +1,16 @@
+# Board: raspberry-pi-pico
+
+id: raspberry-pi-pico
+display_name: Raspberry Pi Pico (RP2040)
+vendor: Raspberry Pi Foundation
+mcu: rp2040
+default_usb_vid: "2E8A"
+default_usb_pid: "000A"
+default_flash_format: rp2040-uf2
+flashing:
+  tool: picotool
+  boot_mode: bootsel
+notes: |
+  Płytka z RP2040. USB-CDC native. Boot przez BOOTSEL (GPIO15 LOW przy reset)
+  — urządzenie pojawia się jako mass storage, kopiujemy UF2.
+  PID 000A = bootloader (BOOTSEL), PID 000B = aplikacja.

@@ -1,0 +1,100 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hive-core"
+version = "0.1.0"
+description = "Hermes Integration & Verification Environment — Core. Controlled integration, programming, flashing, testing, diagnostics and recovery of robotic devices."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+authors = [
+  { name = "Joker (Joker22pl)", email = "Lukasz.mendera@gmail.com" },
+]
+keywords = ["robotics", "embedded", "flash", "verification", "evidence", "hive"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Embedded Systems",
+  "Topic :: System :: Hardware",
+]
+
+# Runtime dependencies (H0 introduces only the ones used in H0 — others come in H1+)
+dependencies = [
+  "pydantic>=2.6",
+  "PyYAML>=6.0",
+  "jsonschema>=4.21",
+  "typer>=0.12",
+  "rich>=13.7",
+  "python-json-logger>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=4.1",
+  "ruff>=0.4",
+]
+ssh = [
+  "paramiko>=3.4",
+]
+usb = [
+  "pyudev>=0.24",
+  "pyserial>=3.5",
+]
+esp32 = [
+  "esptool>=4.7",
+]
+rp2040 = [
+  # picotool is a binary; installation handled separately (see docs/).
+]
+all = [
+  "paramiko>=3.4",
+  "pyudev>=0.24",
+  "pyserial>=3.5",
+  "esptool>=4.7",
+]
+
+[project.scripts]
+hive = "hive.cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/Joker22pl/hive-core"
+Issues = "https://github.com/Joker22pl/hive-core/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["hive*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "B",   # bugbear
+  "UP",  # pyupgrade
+  "RUF", # ruff-specific
+]
+ignore = [
+  "E501", # line length (handled by formatter)
+  "UP042", # str+Enum (we use string-valued Enums by design)
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+  "unit: pure unit tests",
+  "integration: integration tests (require hardware/network)",
+  "slow: slow tests",
+]

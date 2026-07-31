@@ -1,0 +1,42 @@
+# ESP32-S3 Pico — IMP2 sensor controller
+
+device_id: esp32s3-imp2-sensor-01
+display_name: IMP2 sensor controller (BNO085 + DLDR)
+type: microcontroller
+board: esp32-s3-pico
+project: IMP2
+role: sensor-controller
+
+identity:
+  usb_vid: "303A"
+  usb_pid: "1001"
+  serial_number: null
+  stable_path: /dev/hive/imp2-sensor-controller
+
+capabilities:
+  - usb-cdc
+  - uart
+  - i2c
+  - flash
+  - reset
+  - boot-control
+  - microros-serial
+
+firmware:
+  target: esp32s3
+  expected_project: sensor-controller
+  known_good_artifact: null
+
+safety:
+  motor_power_required: false
+  motor_enable_must_be_off_during_flash: true
+  automatic_power_cycle_allowed: true
+  automatic_flash_allowed: true
+
+recovery:
+  strategy: esp32-bootloader-reflash
+  max_attempts: 3
+  escalate_to_human_after: 3
+
+metadata:
+  notes: "BNO085 IMU + DLDR line sensor."

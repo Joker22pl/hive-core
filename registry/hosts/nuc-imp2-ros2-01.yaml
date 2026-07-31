@@ -1,0 +1,43 @@
+# Intel NUC — host ROS 2 (IMP2)
+
+device_id: nuc-imp2-ros2-01
+display_name: IMP2 ROS 2 host (Intel NUC)
+type: linux_host
+project: IMP2
+role: ros2-computer
+
+identity:
+  usb_vid: null
+  usb_pid: null
+  serial_number: null
+  stable_path: null
+  ssh:
+    host: 192.168.1.184
+    port: 22
+    user: kotekrobot
+    host_key_fingerprint: null     # TODO: wypełnić po pierwszym połączeniu (H4)
+    credential_reference: null     # np. "ssh-agent:imp2-nuc"
+
+capabilities:
+  - ssh
+  - systemd
+  - ros2
+
+firmware:
+  target: ubuntu-24.04
+  expected_project: ros2-host
+  known_good_artifact: null
+
+safety:
+  motor_power_required: false
+  motor_enable_must_be_off_during_flash: false
+  automatic_power_cycle_allowed: false     # PDU/smart plug nie jest jeszcze podłączony
+  automatic_flash_allowed: false
+
+recovery:
+  strategy: linux-ssh-service-restart
+  max_attempts: 2
+  escalate_to_human_after: 2
+
+metadata:
+  notes: "Główny host ROS 2 dla IMP2. Nie podłączony do HIVE-IO power control (H2+)."

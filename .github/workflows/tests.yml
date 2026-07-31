@@ -1,0 +1,88 @@
+name: hive-core tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install system deps (udev for pyudev)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libgudev-1.0-0
+
+      - name: Install package + dev extras
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,usb,ssh]"
+
+      - name: Lint (ruff)
+        run: |
+          ruff check src/ tests/
+          ruff format --check src/ tests/
+
+      - name: Pytest with coverage (unit)
+        run: |
+          python -m pytest tests/unit -q --cov=src/hive --cov-report=term-missing --cov-fail-under=90
+
+      - name: Pytest (integration)
+        run: |
+          python -m pytest tests/integration -q
+
+      - name: JSON Schema validation
+        run: |
+          python -c "
+          from pathlib import Path
+          from hive.registry import load_all_device_manifests
+          from hive.registry.validator import validate_manifest_against_schema
+          import yaml
+          for path in sorted(Path('registry/devices').glob('*.yaml')):
+              if path.name.startswith('_') or path.name == 'README.md':
+                  continue
+              data = yaml.safe_load(path.read_text())
+              validate_manifest_against_schema(data, 'device.schema.json')
+          print('All device manifests validate against schema.')
+          "
+
+      - name: Manifest examples validation
+        run: |
+          python -c "
+          from pathlib import Path
+          from hive.registry import load_all_device_manifests
+          manifests = load_all_device_manifests(Path('registry/devices'))
+          print(f'Loaded {len(manifests)} device manifests.')
+          assert len(manifests) >= 4, 'expected at least 4 bundled device manifests'
+          "
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: CLI smoke test
+        run: |
+          set -e
+          hive --version
+          hive system status
+          hive device list
+          # Use a JSON store so the lock survives across CLI invocations.
+          SMOKE_STORE="$(mktemp /tmp/hive-smoke-XXXXXX.json)"
+          OUT=$(hive lock acquire smoke-test --owner smoke --operation test --json --json-store "$SMOKE_STORE")
+          echo "$OUT"
+          SID=$(echo "$OUT" | python -c 'import json,sys; print(json.loads(sys.stdin.read())["lock"]["session_id"])')
+          hive lock release smoke-test --session-id "$SID" --json --json-store "$SMOKE_STORE"
+          rm -f "$SMOKE_STORE"

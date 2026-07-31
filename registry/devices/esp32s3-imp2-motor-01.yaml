@@ -1,0 +1,43 @@
+# ESP32-S3 Pico — IMP2 motor controller
+
+device_id: esp32s3-imp2-motor-01
+display_name: IMP2 motor controller
+type: microcontroller
+board: esp32-s3-pico
+project: IMP2
+role: motor-controller
+
+identity:
+  usb_vid: "303A"
+  usb_pid: "1001"
+  serial_number: null              # TODO: wypełnić po odkryciu (H1)
+  stable_path: /dev/hive/imp2-motor-controller
+
+capabilities:
+  - usb-cdc
+  - uart
+  - flash
+  - reset
+  - boot-control
+  - motor-control
+  - microros-serial
+
+firmware:
+  target: esp32s3
+  expected_project: motor-controller
+  known_good_artifact: null        # wypełnić po wyznaczeniu known-good
+
+safety:
+  motor_power_required: true
+  motor_enable_must_be_off_during_flash: true
+  automatic_power_cycle_allowed: true
+  automatic_flash_allowed: true
+
+recovery:
+  strategy: esp32-bootloader-reflash
+  max_attempts: 3
+  escalate_to_human_after: 3
+
+metadata:
+  location: "stanowisko domowe / biurko"
+  notes: "Główny sterownik silników IMP2. Zasilany z POWER_ESP32_1 przez HIVE-IO."

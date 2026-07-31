@@ -1,0 +1,16 @@
+# Board: esp32-s3-pico
+
+id: esp32-s3-pico
+display_name: ESP32-S3 Pico (Espressif)
+vendor: Espressif
+mcu: esp32-s3
+default_usb_vid: "303A"
+default_usb_pid: "1001"
+default_flash_format: esp32-binary
+flashing:
+  tool: esptool
+  boot_mode: rom-usb
+notes: |
+  Płytka deweloperska z ESP32-S3. USB-CDC native, ROM bootloader
+  dostępny przez USB (nie wymaga zewnętrznego programatora).
+  Wejście w bootloader: BOOT GPIO9 LOW + RESET pulse.

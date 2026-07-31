@@ -1,0 +1,40 @@
+# Raspberry Pi Pico — test target (RP2040)
+
+device_id: pico-test-01
+display_name: RP2040 test target
+type: microcontroller
+board: raspberry-pi-pico
+project: HIVE
+role: test-target
+
+identity:
+  usb_vid: "2E8A"                  # Raspberry Pi VID
+  usb_pid: "000A"                  # Pico PID (bootloader); 000B po boot app
+  serial_number: null
+  stable_path: /dev/hive/pico-test-01
+
+capabilities:
+  - usb-cdc
+  - uart
+  - flash
+  - reset
+  - boot-control                   # BOOTSEL
+
+firmware:
+  target: rp2040
+  expected_project: test-target
+  known_good_artifact: null
+
+safety:
+  motor_power_required: false
+  motor_enable_must_be_off_during_flash: true
+  automatic_power_cycle_allowed: true
+  automatic_flash_allowed: true
+
+recovery:
+  strategy: rp2040-bootsel-reflash
+  max_attempts: 3
+  escalate_to_human_after: 3
+
+metadata:
+  notes: "Docelowy RP2040 używany do testów recovery i profilu rp2040-basic-health."
