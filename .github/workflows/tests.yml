@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -76,13 +78,12 @@ jobs:
       - name: CLI smoke test
         run: |
           set -e
-          hive --version
-          hive system status
-          hive device list
-          # Use a JSON store so the lock survives across CLI invocations.
-          SMOKE_STORE="$(mktemp /tmp/hive-smoke-XXXXXX.json)"
-          OUT=$(hive lock acquire smoke-test --owner smoke --operation test --json --json-store "$SMOKE_STORE")
+          HIVE_DB_URL="sqlite:///:memory:" hive --version
+          HIVE_DB_URL="sqlite:///:memory:" hive system status
+          HIVE_DB_URL="sqlite:///:memory:" hive device list
+          HIVE_DB_URL="sqlite:///:memory:" hive device scan --no-persist --no-usb --no-serial
+          # Lock smoke test (in-memory, ephemeral)
+          OUT=$(HIVE_DB_URL="sqlite:///:memory:" hive lock acquire smoke-test --owner smoke --operation test --json)
           echo "$OUT"
           SID=$(echo "$OUT" | python -c 'import json,sys; print(json.loads(sys.stdin.read())["lock"]["session_id"])')
-          hive lock release smoke-test --session-id "$SID" --json --json-store "$SMOKE_STORE"
-          rm -f "$SMOKE_STORE"
+          HIVE_DB_URL="sqlite:///:memory:" hive lock release smoke-test --session-id "$SID" --json
