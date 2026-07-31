@@ -145,7 +145,7 @@ def test_version_callback(runner: CliRunner) -> None:
     res = runner.invoke(app, ["--version"])
     assert res.exit_code == 0
     assert "hive 0.1.0" in res.stdout
-    assert "H1" in res.stdout
+    assert "H2" in res.stdout
 
 
 # ---------- system status ----------
@@ -156,7 +156,7 @@ def test_system_status(runner: CliRunner) -> None:
     assert res.exit_code == 0
     assert "hive-core" in res.stdout
     assert "0.1.0" in res.stdout
-    assert "H1" in res.stdout
+    assert "H2" in res.stdout
 
 
 # ---------- lock list (json store) ----------
