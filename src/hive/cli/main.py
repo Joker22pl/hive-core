@@ -92,7 +92,9 @@ def system_status() -> None:
     table.add_row("lock_store", "in-memory (default)")
     table.add_row("artifact_store", "(not configured)")
     console.print(table)
-    console.print("[dim]H1: discovery + registry + locks ready. H2+ (HIVE-IO firmware, flashing, SSH) still skeletons.[/dim]")
+    console.print(
+        "[dim]H1: discovery + registry + locks ready. H2+ (HIVE-IO firmware, flashing, SSH) still skeletons.[/dim]"
+    )
 
 
 # ---------- device ----------

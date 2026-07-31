@@ -5,4 +5,4 @@ of the stage — multiple stages may share the same version.
 """
 
 __version__ = "0.1.0"
-__stage__ = "H1"
+__stage__ = "H2"
