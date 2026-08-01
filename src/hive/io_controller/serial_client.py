@@ -49,6 +49,8 @@ class SerialHiveIOClient(HiveIOClient):
                    LoopbackTransport for tests).
         request_timeout_s: per-request timeout in seconds.
         heartbeat_interval_ms: background heartbeat interval.
+        retry_attempts: number of attempts per send (default 1 = no retry).
+        retry_backoff_s: sleep between retry attempts (default 50 ms).
     """
 
     protocol_version: str = PROTOCOL_VERSION
@@ -59,10 +61,16 @@ class SerialHiveIOClient(HiveIOClient):
         *,
         request_timeout_s: float = 2.0,
         heartbeat_interval_ms: int = 200,
+        retry_attempts: int = 1,
+        retry_backoff_s: float = 0.05,
     ) -> None:
+        if retry_attempts < 1:
+            raise ValueError("retry_attempts must be >= 1")
         self._transport = transport
         self._request_timeout_s = request_timeout_s
         self._heartbeat_interval_ms = heartbeat_interval_ms
+        self._retry_attempts = retry_attempts
+        self._retry_backoff_s = max(0.0, retry_backoff_s)
 
         # Heartbeat thread state
         self._hb_thread: threading.Thread | None = None
@@ -77,7 +85,7 @@ class SerialHiveIOClient(HiveIOClient):
         # Verify the firmware is alive by asking for status. If this
         # fails, the firmware isn't flashed or the wrong port is open.
         resp = self.get_status()
-        if isinstance(resp, ErrorResponse):
+        if resp.result == "error":
             raise HiveIOError(
                 f"HIVE-IO get_status returned error: {resp.error_class} — {resp.message}"
             )
@@ -95,14 +103,28 @@ class SerialHiveIOClient(HiveIOClient):
     def send_request(self, request: Request) -> Response:
         if not self._transport.is_open:
             raise HiveIOError("SerialHiveIOClient: transport not open")
+
+        last_error: HiveIOError | None = None
+        for attempt in range(1, self._retry_attempts + 1):
+            try:
+                return self._send_once(request)
+            except HiveIOError as e:
+                last_error = e
+                if not _is_transient_send_error(e) or attempt >= self._retry_attempts:
+                    raise
+                if self._retry_backoff_s > 0:
+                    time.sleep(self._retry_backoff_s)
+        # Defensive: loop always returns or raises, but keep static checkers happy.
+        assert last_error is not None
+        raise last_error
+
+    def _send_once(self, request: Request) -> Response:
         try:
             payload = request.to_jsonl().encode("utf-8")
             self._transport.write_line(payload)
         except TransportError as e:
             raise HiveIOError(f"Transport write failed: {e}") from e
 
-        # Read response. Loop because some serial transports return
-        # blank lines between requests when the device echoes.
         deadline = time.monotonic() + self._request_timeout_s
         while True:
             remaining = deadline - time.monotonic()
@@ -116,7 +138,7 @@ class SerialHiveIOClient(HiveIOClient):
             except TransportError as e:
                 raise HiveIOError(f"Transport read failed: {e}") from e
             if line is None:
-                continue  # empty read; loop until timeout
+                continue
             try:
                 text = line.decode("utf-8")
             except UnicodeDecodeError as e:
@@ -194,12 +216,16 @@ class SerialHiveIOClient(HiveIOClient):
         baudrate: int = 115200,
         request_timeout_s: float = 2.0,
         heartbeat_interval_ms: int = 200,
+        retry_attempts: int = 1,
+        retry_backoff_s: float = 0.05,
     ) -> SerialHiveIOClient:
         """Convenience constructor for a real USB CDC port."""
         return cls(
             SerialTransport(port=port, baudrate=baudrate, timeout_s=request_timeout_s),
             request_timeout_s=request_timeout_s,
             heartbeat_interval_ms=heartbeat_interval_ms,
+            retry_attempts=retry_attempts,
+            retry_backoff_s=retry_backoff_s,
         )
 
     # ---- high-level commands (HIVE-IO protocol surface) ----
@@ -247,6 +273,17 @@ class SerialHiveIOClient(HiveIOClient):
 
     def firmware_version(self) -> Response:
         return self.send_request(Request(command="firmware_version"))
+
+
+def _is_transient_send_error(error: HiveIOError) -> bool:
+    """Retry only on transport-level transients (timeout, read/write failure).
+
+    Protocol-level errors (invalid JSON, non-UTF8) are deterministic and must
+    surface immediately — retrying them would hide bugs.
+    """
+    if "Transport" in error.message or "Timeout" in error.message:
+        return True
+    return False
 
 
 __all__ = ["HeartbeatLostError", "HiveIOError", "SerialHiveIOClient"]
