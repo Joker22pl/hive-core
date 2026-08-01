@@ -218,15 +218,26 @@ class SerialHiveIOClient(HiveIOClient):
         heartbeat_interval_ms: int = 200,
         retry_attempts: int = 1,
         retry_backoff_s: float = 0.05,
+        auto_connect: bool = True,
     ) -> SerialHiveIOClient:
-        """Convenience constructor for a real USB CDC port."""
-        return cls(
+        """Convenience constructor for a real USB CDC port.
+
+        `auto_connect=True` (default) opens the transport immediately
+        so callers can issue commands right away. Set `auto_connect=False`
+        and call `connect()` yourself when you want strict control over
+        the lifecycle (e.g. tests that pair the transport with a mock
+        before opening).
+        """
+        client = cls(
             SerialTransport(port=port, baudrate=baudrate, timeout_s=request_timeout_s),
             request_timeout_s=request_timeout_s,
             heartbeat_interval_ms=heartbeat_interval_ms,
             retry_attempts=retry_attempts,
             retry_backoff_s=retry_backoff_s,
         )
+        if auto_connect:
+            client.connect()
+        return client
 
     # ---- high-level commands (HIVE-IO protocol surface) ----
 
