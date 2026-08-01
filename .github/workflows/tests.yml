@@ -45,6 +45,14 @@ jobs:
         run: |
           python -m pytest tests/integration -q
 
+      - name: PTY smoke (real HIVE-IO mock over kernel PTY)
+        run: |
+          # Spawns tools/mock_hive_io.py from hive-io as a subprocess and
+          # exercises the JSON Lines wire protocol end-to-end. This catches
+          # regressions in the host transport + parser pipeline without
+          # needing real hardware.
+          python tests/ci_pty_smoke.py
+
       - name: JSON Schema validation
         run: |
           python -c "
